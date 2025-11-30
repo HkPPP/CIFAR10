@@ -1,4 +1,5 @@
 **kaggle/**
 **.data/**
 **__pycache__/**
-**models/**best_model.pt
+**models/**
+best_model.pt
