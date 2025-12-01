@@ -13,19 +13,6 @@ if __name__ == "__main__":
     print("Device: ", device)
 
     # Data augmentation
-    # train_transform = transforms.Compose([
-    #     transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),  
-    #     transforms.RandomPerspective(distortion_scale=0.5, p=0.5),
-    #     transforms.RandomHorizontalFlip(p=0.5),
-    #     transforms.ToTensor(),
-    # ])
-
-    # test_transform = transforms.Compose([
-    #     transforms.ToTensor(),
-    # ])
-
-
-    
     mean, std = [0.4914, 0.4822, 0.4465], [0.247, 0.243, 0.261]
     # These values are mostly used by researchers as found to very useful in fast convergence
 
@@ -72,6 +59,12 @@ if __name__ == "__main__":
     optimizer = optim.SGD(net.parameters(), lr=0.01, weight_decay=1e-6, momentum=0.9)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=10, min_lr=0.00001)
 
+    history = {
+        "train_loss": [],
+        "test_loss": [],
+        "train_acc": [],
+        "test_acc": [],
+    }
 
     # Load model in GPU
     net.to(device)
@@ -138,9 +131,15 @@ if __name__ == "__main__":
 
         test_loss /= (len(test_dataloader.dataset) / batch_size)
         test_accuracy = 100. * test_correct / len(test_dataloader.dataset)
+        train_acc = 100. * train_correct / len(train_dataloader.dataset)
+        
+        history["train_loss"].append(train_loss)
+        history["test_loss"].append(test_loss)
+        history["train_acc"].append(train_acc)
+        history["test_acc"].append(test_accuracy)
 
         print("[Epoch {}] Train Loss: {:.6f} - Test Loss: {:.6f} - Train Accuracy: {:.2f}% - Test Accuracy: {:.2f}%".format(
-            epoch + 1, train_loss, test_loss, 100. * train_correct / len(train_dataloader.dataset), test_accuracy
+            epoch + 1, train_loss, test_loss, train_acc, test_accuracy
         ))
 
         if test_accuracy > best_accuracy:
@@ -151,3 +150,4 @@ if __name__ == "__main__":
             torch.save(net.state_dict(), "models/best_model.pt")
 
     print("\nBEST TEST ACCURACY: ", best_accuracy, " in epoch ", best_epoch)
+    torch.save(history, "models/training_history.pt")
