@@ -56,8 +56,17 @@ if __name__ == "__main__":
 
     # Training hyperparameters
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.01, weight_decay=1e-6, momentum=0.9)
-    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=10, min_lr=0.00001)
+    optimizer = optim.SGD(
+        net.parameters(), 
+        lr=0.01, weight_decay=1e-6, 
+        momentum=0.9
+        )
+    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, 
+        factor=0.1, 
+        patience=10, 
+        min_lr=0.00001
+        )
 
     history = {
         "train_loss": [],
