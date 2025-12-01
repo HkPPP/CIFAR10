@@ -42,9 +42,9 @@ class CIFAR10_dataset(Dataset):
     
 
 ## Define the CNN model
-class AdvancedCNN(nn.Module):
+class ICCNN(nn.Module):
     def __init__(self, num_classes=10):
-        super(AdvancedCNN, self).__init__()
+        super(ICCNN, self).__init__()
 
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=32 * 2, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(in_channels=32 * 2, out_channels=64 * 2, kernel_size=3, padding=1)
@@ -93,3 +93,6 @@ class AdvancedCNN(nn.Module):
         x = self.dropout(x)
         x = self.fc3(x)
         return x
+    
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
