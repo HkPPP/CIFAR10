@@ -14,9 +14,7 @@ if __name__ == "__main__":
 
     # Data augmentation
     mean, std = [0.4914, 0.4822, 0.4465], [0.247, 0.243, 0.261]
-    # These values are mostly used by researchers as found to very useful in fast convergence
 
-    # https://pytorch.org/vision/stable/transforms.html
     train_transform = transforms.Compose([
         transforms.RandomRotation(20), # Randomly rotate some images by 20 degrees
         transforms.RandomHorizontalFlip(0.1), # Randomly horizontal flip the images
@@ -27,7 +25,6 @@ if __name__ == "__main__":
                                         p = 0.1), # Randomly adjust sharpness
         transforms.ToTensor(),   # Converting image to tensor
         transforms.Normalize(mean, std), # Normalizing with standard mean and standard deviation
-        # transforms.RandomErasing(p=0.75,scale=(0.02, 0.1),value=1.0, inplace=False)
         ])
 
 
@@ -36,6 +33,7 @@ if __name__ == "__main__":
                                         ])
 
 
+    ### Loading Datasets and Dataloaders
     train_dataset = CIFAR10_dataset(partition="train", transform=train_transform)
     test_dataset = CIFAR10_dataset(partition="test", transform=test_transform)
 
@@ -67,7 +65,6 @@ if __name__ == "__main__":
         patience=10, 
         min_lr=0.00001
         )
-
     history = {
         "train_loss": [],
         "test_loss": [],
@@ -85,55 +82,45 @@ if __name__ == "__main__":
     for epoch in range(epochs):
         # TRAIN NETWORK
         train_loss, train_correct = 0, 0
-        net.train()
+        net.train() # Switch to train mode
         with tqdm(iter(train_dataloader), desc="Epoch " + str(epoch), unit="batch") as tepoch:
             for batch in tepoch:
-
-                # Returned values of Dataset Class
+                # Move data to gpu
                 images = batch["img"].to(device)
                 labels = batch["label"].to(device)
-
-                # zero the parameter gradients
+                # zero the parameter gradients for every batch
                 optimizer.zero_grad()
-
                 # Forward
                 outputs = net(images)
                 loss = criterion(outputs, labels)
-
                 # Calculate gradients
                 loss.backward()
-
                 # Update gradients
                 optimizer.step()
-
                 # one hot -> labels
                 labels = torch.argmax(labels, dim=1)
                 pred = torch.argmax(outputs, dim=1)
                 train_correct += pred.eq(labels).sum().item()
 
-                # print statistics
                 train_loss += loss.item()
 
         train_loss /= (len(train_dataloader.dataset) / batch_size)
 
         # TEST NETWORK
         test_loss, test_correct = 0, 0
-        net.eval()
+        net.eval() # Switch to eval mode
         with torch.no_grad():
             with tqdm(iter(test_dataloader), desc="Test " + str(epoch), unit="batch") as tepoch:
                 for batch in tepoch:
-
+                    # Move data to gpu
                     images = batch["img"].to(device)
                     labels = batch["label"].to(device)
-
                     # Forward
                     outputs = net(images)
                     test_loss += criterion(outputs, labels)
-
                     # one hot -> labels
                     labels = torch.argmax(labels, dim=1)
                     pred = torch.argmax(outputs, dim=1)
-
                     test_correct += pred.eq(labels).sum().item()
 
         lr_scheduler.step(test_loss)
@@ -154,7 +141,6 @@ if __name__ == "__main__":
         if test_accuracy > best_accuracy:
             best_accuracy = test_accuracy
             best_epoch = epoch
-
             # Save best weights
             torch.save(net.state_dict(), "models/best_model.pt")
 

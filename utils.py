@@ -58,37 +58,37 @@ class ICCNN(nn.Module):
     def __init__(self, num_classes=10):
         super(ICCNN, self).__init__()
 
-        # Block 1: C: 3 -> 64
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=32 * 2, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=32 * 2, out_channels=64 * 2, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(in_channels=64 * 2, out_channels=64 * 2, kernel_size=3, padding=1)
-        # Block 2: C: 128 -> 256
-        self.conv4 = nn.Conv2d(in_channels=64 * 2, out_channels=128 * 2, kernel_size=3, padding=1)
-        self.conv5 = nn.Conv2d(in_channels=128 * 2, out_channels=128 * 2, kernel_size=3, padding=1)
-        self.conv6 = nn.Conv2d(in_channels=128 * 2, out_channels=128 * 2, kernel_size=3, padding=1)
-        # Block 3: C: 256 -> 512
-        self.conv7 = nn.Conv2d(in_channels=128 * 2, out_channels=256 * 2, kernel_size=3, padding=1)
-        self.conv8 = nn.Conv2d(in_channels=256 * 2, out_channels=256 * 2, kernel_size=3, padding=1)
-        self.conv9 = nn.Conv2d(in_channels=256 * 2, out_channels=256 * 2, kernel_size=3, padding=1)
+        # Block 1: Channels: 3 -> 64 - Extract low-level features
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1)
+        # Block 2: Channels: 128 -> 256 - Extract mid-level features
+        self.conv4 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1)
+        self.conv5 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
+        self.conv6 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
+        # Block 3: Channels: 256 -> 512 - Extract high-level features
+        self.conv7 = nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, padding=1)
+        self.conv8 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, padding=1)
+        self.conv9 = nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, padding=1)
         
-        # Batch normalization after the first conv of each block
-        self.bn1 = nn.BatchNorm2d(32 * 2)
-        self.bn2 = nn.BatchNorm2d(128 * 2)
-        self.bn3 = nn.BatchNorm2d(256 * 2)
+        # Batch normalization after the first conv of each block to stabilize training
+        self.bn1 = nn.BatchNorm2d(64)
+        self.bn2 = nn.BatchNorm2d(256)
+        self.bn3 = nn.BatchNorm2d(512)
         
-        # Shared layers
-        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.dropout = nn.Dropout2d(0.2)
-        self.relu = nn.ReLU()
+        # Shared layers for all blocks
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) # Reduces spatial dimensions by half
+        self.dropout = nn.Dropout2d(0.2) # Dropout for regularization
+        self.relu = nn.ReLU() # ReLU activation function
 
         # Fully connected classifier
         # --------------------------
         # After 3x MaxPool, spatial sizes are 32x32 -> 16x16 -> 8x8 -> 4x4
         # Channels after last block = 512
-        # So flattened feature size = 512 * 4 * 4 = 8192 = 4096 * 2
-        self.fc1 = nn.Linear(4096 * 2, 4096 * 2)
-        self.fc2 = nn.Linear(4096 * 2, 2048 * 2)
-        self.fc3 = nn.Linear(2048 * 2, num_classes)
+        # So flattened feature size = 512 * 4 * 4 = 8192
+        self.fc1 = nn.Linear(8192, 8192)
+        self.fc2 = nn.Linear(8192, 4096)
+        self.fc3 = nn.Linear(4096, num_classes)
         
 
     def forward(self, x):
